@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Movie } from "../../types/movie";
-import { Toaster } from "react-hot-toast";
+import { Toaster, toast } from "react-hot-toast";
 import fetchMovies from "../../services/movieService";
 import SearchBar from "../SearchBar/SearchBar";
 import MovieGrid from "../MovieGrid/MovieGrid";
@@ -8,7 +8,9 @@ import Loader from "../Loader/Loader";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
 import MovieModal from "../MovieModal/MovieModal";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import Pagination from "../ReactPaginate/ReactPaginate";
+import { useEffect } from "react";
+import ReactPaginate from "react-paginate";
+import css from "./App.module.css";
 
 export default function App() {
   const [query, setQuery] = useState("");
@@ -21,6 +23,12 @@ export default function App() {
   });
 
   const totalPages = data?.total_pages ?? 0;
+
+  useEffect(() => {
+    if (isSuccess && data?.results?.length === 0) {
+      toast.error("No movies found for your request.");
+    }
+  }, [isSuccess, data]);
 
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
 
@@ -40,10 +48,16 @@ export default function App() {
     <>
       <SearchBar onSubmit={handleSubmit} />
       {isSuccess && totalPages > 1 && (
-        <Pagination
-          page={currentPage}
-          totalPages={totalPages}
-          setPage={setCurrentPage}
+        <ReactPaginate
+          pageCount={totalPages}
+          pageRangeDisplayed={5}
+          marginPagesDisplayed={1}
+          onPageChange={({ selected }) => setCurrentPage(selected + 1)}
+          forcePage={currentPage - 1}
+          containerClassName={css.pagination}
+          activeClassName={css.active}
+          nextLabel="→"
+          previousLabel="←"
         />
       )}
       <Toaster position="top-center" />
